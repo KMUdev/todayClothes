@@ -1,9 +1,11 @@
+import axios from "axios";
+
 interface ILocationManager {
   openPopup: () => void;
   getPosition: () => Position;
 }
 
-interface Position {
+export interface Position {
   extraAddr: string;
   zoncode: string;
   addr: string;
@@ -61,8 +63,23 @@ class LocationManager implements ILocationManager {
     }).open();
   };
 
-  getPosition() {
+  getPosition(): Position {
     return { extraAddr: this.extraAddr, zoncode: this.zoncode, addr: this.addr };
+  }
+
+  //FIXME: Cross origin 문제발생, 하지만 postMan으로 요청했을땐 정상작동..header문제로 의심
+  //FIXME: dotenv를 설치하고, webpack plugin 도 해봤는데, 에러납니다 ㅜㅜ
+  async getGeoLocation(address: string) {
+    const data = await axios.get("https://naveropenapi.apigw.ntruss.com/map-geocode", {
+      headers: {
+        "X-NCP-APIGW-API-KEY-ID": "process.env.NAVER_ID", // dotenv가 동작한다면 ""를 제거하고 환경변수 사용해야합니다
+        "X-NCP-APIGW-API-KEY": "process.env.NAVER_KEY", // dotenv가 동작한다면 ""를 제거하고 환경변수 사용해야합니다
+      },
+      params: {
+        query: address,
+      },
+    });
+    return data;
   }
 }
 
