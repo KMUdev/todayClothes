@@ -2,24 +2,41 @@ import axios from "axios";
 
 interface ILocationManager {
   openPopup: () => void;
-  getPosition: () => Position;
+  getAddress: () => Address;
+  getWeather: (lat: number, long: number) => Promise<WeahterData>;
 }
 
-export interface Position {
+export interface Address {
   extraAddr: string;
   zoncode: string;
   addr: string;
 }
 
+interface WeahterData {
+  current: Current;
+  daily: Daily[];
+}
+
+interface Current {
+  temp: number;
+  description: string;
+}
+
+interface Daily {
+  temp: object[];
+  description: string;
+}
 class LocationManager implements ILocationManager {
   private extraAddr: string;
   private zoncode: string;
   private addr: string;
+  private weatherKey: string;
 
   constructor() {
     this.extraAddr = "";
     this.zoncode = "";
     this.addr = "";
+    this.weatherKey = "979787d17ff36d6639902212e1d6ffe4";
   }
 
   openPopup = () => {
@@ -63,23 +80,45 @@ class LocationManager implements ILocationManager {
     }).open();
   };
 
-  getPosition(): Position {
+  getAddress(): Address {
     return { extraAddr: this.extraAddr, zoncode: this.zoncode, addr: this.addr };
   }
 
   //FIXME: Cross origin 문제발생, 하지만 postMan으로 요청했을땐 정상작동..header문제로 의심
   //FIXME: dotenv를 설치하고, webpack plugin 도 해봤는데, 에러납니다 ㅜㅜ
   async getGeoLocation(address: string) {
-    const data = await axios.get("https://naveropenapi.apigw.ntruss.com/map-geocode", {
+    const data = await axios.get(`https://naveropenapi.apigw.ntruss.com/map-geocode?query=${address}`, {
       headers: {
-        "X-NCP-APIGW-API-KEY-ID": "process.env.NAVER_ID", // dotenv가 동작한다면 ""를 제거하고 환경변수 사용해야합니다
-        "X-NCP-APIGW-API-KEY": "process.env.NAVER_KEY", // dotenv가 동작한다면 ""를 제거하고 환경변수 사용해야합니다
-      },
-      params: {
-        query: address,
+        "X-NCP-APIGW-API-KEY-ID": "ll37qfgivf", // dotenv가 동작한다면 ""를 제거하고 환경변수 사용해야합니다
+        "X-NCP-APIGW-API-KEY": "Qe7U6XHx0K2ZIA5PoOrIFjSFmRUHWTyMBW36OSSx", // dotenv가 동작한다면 ""를 제거하고 환경변수 사용해야합니다
       },
     });
     return data;
+  }
+
+  async getWeather(lat: number, lon: number): Promise<WeahterData> {
+    const data = await axios.get(
+      `https://api.openweathermap.org/data/2.5/onecall?lat=${lat.toString()}&lon=${lon.toString()}&units=metric&exclude=hourly,alerts,minutely&lang=kr&appid=${
+        this.weatherKey
+      }`,
+    );
+
+    // 반환값 다듬기 current &  daily
+    const current: Current = {
+      temp: data.data.current.temp,
+      description: data.data.current.weather[0].description,
+    };
+    const daily: Daily[] = [];
+
+    data.data.daily.forEach((day: any) => {
+      const newDay = {
+        temp: day.temp,
+        description: day.weather[0].description,
+      };
+      daily.push(newDay);
+    });
+
+    return { current, daily };
   }
 }
 
