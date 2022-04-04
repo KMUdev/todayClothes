@@ -11,10 +11,14 @@ module.exports = {
   },
   module: {
     rules: [
+      // 바벨
       {
         test: /\.tsx?/,
         loader: "babel-loader",
         exclude: path.join(__dirname, "node_modules"),
+        options: {
+          plugins: ["@babel/transform-runtime"],
+        },
       },
       // 이미지
       {
