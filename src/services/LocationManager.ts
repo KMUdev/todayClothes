@@ -87,25 +87,15 @@ class LocationManager implements ILocationManager {
   //FIXME: Cross origin 문제발생, 하지만 postMan으로 요청했을땐 정상작동..header문제로 의심
   //FIXME: dotenv를 설치하고, webpack plugin 도 해봤는데, 에러납니다 ㅜㅜ
   async getGeoLocation(address: string) {
-    // const data = await axios.get(`https://naveropenapi.apigw.ntruss.com/map-geocode?query=${address}`, {
-    //   headers: {
-    //     "X-NCP-APIGW-API-KEY-ID": "ll37qfgivf", // dotenv가 동작한다면 ""를 제거하고 환경변수 사용해야합니다
-    //     "X-NCP-APIGW-API-KEY": "Qe7U6XHx0K2ZIA5PoOrIFjSFmRUHWTyMBW36OSSx", // dotenv가 동작한다면 ""를 제거하고 환경변수 사용해야합니다
-    //   },
-    // });
-
     try {
       const data = await fetch(`https://naveropenapi.apigw.ntruss.com/map-geocode?query=${address}`, {
         headers: {
-          "X-NCP-APIGW-API-KEY-ID": "ll37qfgivf", // dotenv가 동작한다면 ""를 제거하고 환경변수 사용해야합니다
-          "X-NCP-APIGW-API-KEY": "Qe7U6XHx0K2ZIA5PoOrIFjSFmRUHWTyMBW36OSSx", // dotenv가 동작한다면 ""를 제거하고 환경변수 사용해야합니다
+          "X-NCP-APIGW-API-KEY-ID": "ll37qfgivf",
+          "X-NCP-APIGW-API-KEY": "Qe7U6XHx0K2ZIA5PoOrIFjSFmRUHWTyMBW36OSSx",
         },
       });
-      console.log(data);
       return data;
-    } catch (e) {
-      console.log(e);
-    }
+    } catch (e) {}
   }
 
   async getWeather(lat: number, lon: number): Promise<WeahterData> {
@@ -115,7 +105,6 @@ class LocationManager implements ILocationManager {
       }`,
     );
 
-    // 반환값 다듬기 current & daily
     const current: Current = {
       temp: data.data.current.temp,
       description: data.data.current.weather[0].description,
