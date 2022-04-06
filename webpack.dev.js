@@ -1,9 +1,14 @@
 const webpack = require("./webpack.common");
 const { merge } = require("webpack-merge");
-const path = require("path");
+const Dotenv = require("dotenv-webpack");
 
 module.exports = merge(webpack, {
   mode: "development",
+  plugins: [
+    new Dotenv({
+      path: "./env/.dev.env",
+    }),
+  ],
   devServer: {
     hot: true,
     proxy: {
