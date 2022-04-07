@@ -1,10 +1,11 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
+require("regenerator-runtime");
 
 module.exports = {
   entry: {
-    app: ["./src/index.tsx"],
+    app: ["babel-polyfill", "./src/index.tsx"],
   },
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx"],
