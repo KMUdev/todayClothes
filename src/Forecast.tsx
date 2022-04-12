@@ -2,7 +2,6 @@ import React from "react";
 import axios from "axios";
 import { IAPIWeatherInfo } from "./interface/IAPIWeatherInfo";
 import { IWeatherInfo } from "./interface/IWeatherInfo";
-import { tmpdir } from "os";
 
 /**
  * 한자리 날짜를 두자리로 만들어준다
@@ -47,50 +46,39 @@ function getPositionForWeatherAPI(): string[] {
 
 // 지금 시간으로부터 24시간내로의 날씨정보
 // fcstInfoInDay[0+23]
-
-function isBaseTimeIn24HrsFromNow(date: string, time: string) {
+function isFcstTimeIn24HrsFromNow(date: string, time: string) {
   const oneHourInMil = 3600000;
   const startT = new Date().setMinutes(0, 0, 0);
   const endT = startT + 24 * oneHourInMil;
-  const baseT = new Date(date + "-" + time[0] + time[1] + "-" + time[2] + time[3]).getTime();
-  return startT <= baseT && baseT <= endT;
+  const fcstT = new Date(parseInt(date.slice(0, 4)), parseInt(date.slice(4, 6)) - 1, parseInt(date.slice(6, 8))).getTime();
+  return startT <= fcstT && fcstT <= endT;
 }
 
-function parseDayWeather(weatherInfo: IAPIWeatherInfo[]): IWeatherInfo[] {
+function parseOneDayWeather(weatherInfo: IAPIWeatherInfo[]): IWeatherInfo[] {
   const oneDayWeatherInfo: IWeatherInfo[] = []; //지금으로부터 24시간내로의 날씨정보를 담을거임
   let curTime;
-  let prevTime = weatherInfo[0].baseTime;
+  let prevTime = weatherInfo[0].fcstTime;
+
+  let oneHourWeatherInfo: IWeatherInfo = { TMP: "", POP: "", WSD: "", REH: "" };
+
   weatherInfo.forEach((e) => {
     curTime = e.fcstTime;
-    const oneHourWeatherInfo: IWeatherInfo = {
-      TMP: "",
-      POP: "",
-      WSD: "",
-      REH: "",
-      TMN: "",
-      TMX: "",
-    };
-
-    if (curTime !== prevTime && isBaseTimeIn24HrsFromNow(e.baseDate, e.baseTime)) {
-      oneDayWeatherInfo.push(oneHourWeatherInfo);
-      prevTime = curTime;
+    if (curTime !== prevTime) {
+      if (isFcstTimeIn24HrsFromNow(e.fcstDate, e.fcstTime)) oneDayWeatherInfo.push(oneHourWeatherInfo);
+      oneHourWeatherInfo = { TMP: "", POP: "", WSD: "", REH: "" };
     }
-    if (e.category === "TMP" || e.category === "POP" || e.category === "WSD" || e.category === "REH" || e.category === "TMN" || e.category === "TMX") {
-      oneHourWeatherInfo[e.category] = e.fcstValue;
-    }
+    if (e.category === "TMP" || e.category === "POP" || e.category === "WSD" || e.category === "REH") oneHourWeatherInfo[e.category] = e.fcstValue;
+    prevTime = curTime;
   });
-
-  // delete trash infos
 
   return oneDayWeatherInfo;
 }
 
-async function getWeatherInfos() {
+async function getWeatherInfos(): Promise<IWeatherInfo[]> {
   const [base_date, base_time] = getDateForWeatherAPI();
   const [base_xpos, base_ypos] = getPositionForWeatherAPI();
-  const WEATHER_API_ENDPOINT = `/api/1360000/VilageFcstInfoService_2.0/getVilageFcst` + `?serviceKey=${process.env.WEATHER_API_KEY}` + `&numOfRows=312` + `&pageNo=1` + `&base_date=${base_date}` + `&base_time=${base_time}` + `&nx=${base_xpos}&ny=${base_ypos}` + `&dataType=JSON`;
+  const WEATHER_API_ENDPOINT = `/api/1360000/VilageFcstInfoService_2.0/getVilageFcst` + `?serviceKey=${process.env.WEATHER_API_KEY}` + `&numOfRows=400` + `&pageNo=1` + `&base_date=${base_date}` + `&base_time=${base_time}` + `&nx=${base_xpos}&ny=${base_ypos}` + `&dataType=JSON`;
 
-  // I want to know how to destruct it pretty
   const {
     data: {
       response: {
@@ -100,16 +88,13 @@ async function getWeatherInfos() {
       },
     },
   } = await axios.get(WEATHER_API_ENDPOINT);
+
   const weatherInfo: IAPIWeatherInfo[] = item;
-  const fcstInfoInDay: IWeatherInfo[] = parseDayWeather(weatherInfo);
 
-  // 어떻게 가공해야할지를 먼저 정해야함.
-  // 시간대별로 나타낼까?
-  // 13개(날씨정보세트) X 26시간 => 하루치 날씨정보
-  //
+  const fcstInfoInDay: IWeatherInfo[] = parseOneDayWeather(weatherInfo);
+  console.log(fcstInfoInDay);
 
-  console.log(weatherInfo);
-  return true;
+  return fcstInfoInDay;
 }
 
 export default getWeatherInfos;
