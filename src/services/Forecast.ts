@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
-import { IAPIWeatherInfo } from "./interface/IAPIWeatherInfo";
-import { IWeatherInfo } from "./interface/IWeatherInfo";
+import { IAPIWeatherInfo } from "../interface/IAPIWeatherInfo";
+import { IWeatherInfo } from "../interface/IWeatherInfo";
 
 /**
  * 한자리 날짜를 두자리로 만들어준다
@@ -40,7 +40,19 @@ function getDateForWeatherAPI(): string[] {
   return [base_date, base_time];
 }
 
-function getPositionForWeatherAPI(): string[] {
+function getPositionFromGPS(): string[] {
+  /**
+   * TODO: 태민
+   * GPS로 X, Y반환
+   */
+  return ["55", "127"];
+}
+
+function getPositionFromAddress(addr: string): string[] {
+  /**
+   * TODO: 태민
+   * GPS로 X, Y반환
+   */
   return ["55", "127"];
 }
 
@@ -76,7 +88,7 @@ function parseOneDayWeather(weatherInfo: IAPIWeatherInfo[]): IWeatherInfo[] {
 
 async function getWeatherInfos(): Promise<IWeatherInfo[]> {
   const [base_date, base_time] = getDateForWeatherAPI();
-  const [base_xpos, base_ypos] = getPositionForWeatherAPI();
+  const [base_xpos, base_ypos] = getPositionFromGPS();
   const WEATHER_API_ENDPOINT = `/api/1360000/VilageFcstInfoService_2.0/getVilageFcst` + `?serviceKey=${process.env.WEATHER_API_KEY}` + `&numOfRows=400` + `&pageNo=1` + `&base_date=${base_date}` + `&base_time=${base_time}` + `&nx=${base_xpos}&ny=${base_ypos}` + `&dataType=JSON`;
 
   const {
@@ -92,7 +104,6 @@ async function getWeatherInfos(): Promise<IWeatherInfo[]> {
   const weatherInfo: IAPIWeatherInfo[] = item;
 
   const fcstInfoInDay: IWeatherInfo[] = parseOneDayWeather(weatherInfo);
-  console.log(fcstInfoInDay);
 
   return fcstInfoInDay;
 }
