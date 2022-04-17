@@ -1,9 +1,12 @@
 import React from "react";
 import styled from "styled-components";
-import useLiveTheme, { Theme } from "../../hooks/useLiveTheme";
+import useLiveTheme, {
+  GradientTop,
+  GradientBottom,
+} from "../../hooks/useLiveTheme";
 
 type WrapperProps = {
-  gradient: typeof Theme;
+  gradient: [GradientTop, GradientBottom];
 };
 
 const Wrapper = styled.div`
